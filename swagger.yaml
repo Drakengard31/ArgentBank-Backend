@@ -49,6 +49,8 @@ paths:
             $ref: '#/definitions/UserProfileResponse'
         '400':
           description: Invalid Fields
+        '401':
+          description: Unauthorized
         '500':
           description: Internal Server Error
 
@@ -59,21 +61,51 @@ paths:
       tags:
         - Transactions
       summary: Get account transactions
-      description: Get all transactions for an account
+      description: Get all transactions for an account with token authentication
       parameters:
         - name: accountId
           in: path
           required: true
           type: string
+          description: Account ID to retrieve transactions for
       responses:
         '200':
           description: Transactions retrieved successfully
           schema:
             $ref: '#/definitions/TransactionsResponse'
         '401':
-          description: Unauthorized
+          description: Unauthorized - Invalid or missing token
         '404':
           description: Account not found
+        '500':
+          description: Internal Server Error
+
+  /transactions:
+    post:
+      security:
+        - Bearer: []
+      tags:
+        - Transactions
+      summary: Add a new transaction
+      description: Create a new transaction entry
+      parameters:
+        - in: body
+          name: body
+          description: Transaction data to create
+          required: true
+          schema:
+            $ref: '#/definitions/TransactionCreate'
+      responses:
+        '201':
+          description: Transaction created successfully
+          schema:
+            $ref: '#/definitions/TransactionDetails'
+        '400':
+          description: Invalid transaction data
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '500':
+          description: Internal Server Error
 
   /transactions/{transactionId}:
     get:
@@ -82,71 +114,130 @@ paths:
       tags:
         - Transactions
       summary: Get transaction details
-      description: Get details for a specific transaction
+      description: Get details for a specific transaction with token authentication
       parameters:
         - name: transactionId
           in: path
           required: true
           type: string
+          description: Transaction ID to retrieve details for
       responses:
         '200':
-          description: Transaction details retrieved
+          description: Transaction details retrieved successfully
           schema:
             $ref: '#/definitions/TransactionDetails'
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '404':
+          description: Transaction not found
+        '500':
+          description: Internal Server Error
+
     put:
       security:
         - Bearer: []
       tags:
         - Transactions
-      summary: Update transaction
-      description: Update transaction details
+      summary: Update transaction details
+      description: Update transaction information with token authentication
       parameters:
         - name: transactionId
           in: path
           required: true
           type: string
+          description: Transaction ID to update
         - in: body
           name: body
+          description: Updated transaction data
           required: true
           schema:
             $ref: '#/definitions/TransactionUpdate'
       responses:
         '200':
-          description: Transaction updated
+          description: Transaction updated successfully
+          schema:
+            $ref: '#/definitions/TransactionDetails'
         '400':
-          description: Invalid data
+          description: Invalid transaction data
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '404':
+          description: Transaction not found
+        '500':
+          description: Internal Server Error
+
+    delete:
+      security:
+        - Bearer: []
+      tags:
+        - Transactions
+      summary: Delete transaction
+      description: Delete a specific transaction with token authentication
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          type: string
+          description: Transaction ID to delete
+      responses:
+        '200':
+          description: Transaction deleted successfully
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '404':
+          description: Transaction not found
+        '500':
+          description: Internal Server Error
 
 securityDefinitions:
   Bearer:
     type: apiKey
     name: Authorization
     in: header
+    description: JWT Authorization header using the Bearer scheme. Example:"Authorization:Bearer {token}"
 
 definitions:
   Login:
+    type: object
     properties:
       email:
         type: string
+        description: User email
+        example: "user@example.com"
       password:
         type: string
+        description: User password
+        example: "password123"
+    required:
+      - email
+      - password
 
   LoginResponse:
     type: object
     properties:
       token:
         type: string
+        description: JWT authentication token
+        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
   UserProfileResponse:
     type: object
     properties:
       firstName:
         type: string
+        description: User's first name
+        example: "Tony"
       lastName:
         type: string
+        description: User's last name
+        example: "Jarvis"
       email:
         type: string
+        description: User's email address
+        example: "tony@example.com"
       accounts:
         type: array
+        description: List of user's accounts
         items:
           $ref: '#/definitions/Account'
 
@@ -155,20 +246,32 @@ definitions:
     properties:
       id:
         type: string
+        description: Account unique identifier
+        example: "8349"
       type:
         type: string
+        description: Account type
+        example: "Checking"
       number:
         type: string
+        description: Account number (masked)
+        example: "x8349"
       balance:
         type: number
+        format: float
+        description: Account balance
+        example: 2082.79
 
   TransactionsResponse:
     type: object
     properties:
       accountId:
         type: string
+        description: Account ID
+        example: "8349"
       transactions:
         type: array
+        description: List of transactions
         items:
           $ref: '#/definitions/Transaction'
 
@@ -177,41 +280,104 @@ definitions:
     properties:
       id:
         type: string
+        description: Transaction unique identifier
+        example: "tx_123456"
       date:
         type: string
         format: date
+        description: Transaction date
+        example: "2024-01-15"
       description:
         type: string
+        description: Transaction description
+        example: "Grocery Store Purchase"
       amount:
         type: number
+        format: float
+        description: Transaction amount
+        example: -45.67
       balance:
         type: number
+        format: float
+        description: Account balance after transaction
+        example: 2037.12
 
   TransactionDetails:
     type: object
     properties:
       id:
         type: string
+        description: Transaction unique identifier
+        example: "tx_123456"
       date:
         type: string
         format: date-time
+        description: Transaction date and time
+        example: "2024-01-15T14:30:00Z"
       description:
         type: string
+        description: Transaction description
+        example: "Grocery Store Purchase"
       amount:
         type: number
+        format: float
+        description: Transaction amount
+        example: -45.67
       balance:
         type: number
+        format: float
+        description: Account balance after transaction
+        example: 2037.12
       category:
         type: string
+        description: Transaction category
+        example: "Food"
       notes:
         type: string
+        description: Additional notes
+        example: "Weekly grocery shopping"
+
+  TransactionCreate:
+    type: object
+    properties:
+      accountId:
+        type: string
+        description: Account ID for the transaction
+        example: "8349"
+      description:
+        type: string
+        description: Transaction description
+        example: "New transaction"
+      amount:
+        type: number
+        format: float
+        description: Transaction amount
+        example: -25.00
+      category:
+        type: string
+        description: Transaction category
+        example: "Food"
+      notes:
+        type: string
+        description: Additional notes
+        example: "Optional transaction notes"
+    required:
+      - accountId
+      - description
+      - amount
 
   TransactionUpdate:
     type: object
     properties:
       description:
         type: string
+        description: Updated transaction description
+        example: "Updated grocery purchase"
       category:
         type: string
+        description: Updated transaction category
+        example: "Food & Dining"
       notes:
         type: string
+        description: Updated additional notes
+        example: "Updated notes for this transaction"
