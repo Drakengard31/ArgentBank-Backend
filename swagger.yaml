@@ -42,6 +42,13 @@ paths:
         - User Module
       summary: User Profile API
       description: API for fetching a user profile
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+          description: Bearer token for authentication
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       responses:
         '200':
           description: User profile retrieved successfully
@@ -63,6 +70,12 @@ paths:
       summary: Get account transactions
       description: Get all transactions for an account with token authentication
       parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+          description: Bearer token for authentication
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         - name: accountId
           in: path
           required: true
@@ -89,6 +102,12 @@ paths:
       summary: Add a new transaction
       description: Create a new transaction entry
       parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+          description: Bearer token for authentication
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         - in: body
           name: body
           description: Transaction data to create
@@ -116,6 +135,12 @@ paths:
       summary: Get transaction details
       description: Get details for a specific transaction with token authentication
       parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+          description: Bearer token for authentication
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         - name: transactionId
           in: path
           required: true
@@ -141,6 +166,12 @@ paths:
       summary: Update transaction details
       description: Update transaction information with token authentication
       parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+          description: Bearer token for authentication
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         - name: transactionId
           in: path
           required: true
@@ -174,6 +205,12 @@ paths:
       summary: Delete transaction
       description: Delete a specific transaction with token authentication
       parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+          description: Bearer token for authentication
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         - name: transactionId
           in: path
           required: true
