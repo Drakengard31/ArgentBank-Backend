@@ -93,39 +93,6 @@ paths:
         '500':
           description: Internal Server Error
 
-  /transactions:
-    post:
-      security:
-        - Bearer: []
-      tags:
-        - Transactions
-      summary: Add a new transaction
-      description: Create a new transaction entry
-      parameters:
-        - name: Authorization
-          in: header
-          required: true
-          type: string
-          description: Bearer token for authentication
-          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        - in: body
-          name: body
-          description: Transaction data to create
-          required: true
-          schema:
-            $ref: '#/definitions/TransactionCreate'
-      responses:
-        '201':
-          description: Transaction created successfully
-          schema:
-            $ref: '#/definitions/TransactionDetails'
-        '400':
-          description: Invalid transaction data
-        '401':
-          description: Unauthorized - Invalid or missing token
-        '500':
-          description: Internal Server Error
-
   /transactions/{transactionId}:
     get:
       security:
@@ -190,35 +157,6 @@ paths:
             $ref: '#/definitions/TransactionDetails'
         '400':
           description: Invalid transaction data
-        '401':
-          description: Unauthorized - Invalid or missing token
-        '404':
-          description: Transaction not found
-        '500':
-          description: Internal Server Error
-
-    delete:
-      security:
-        - Bearer: []
-      tags:
-        - Transactions
-      summary: Delete transaction
-      description: Delete a specific transaction with token authentication
-      parameters:
-        - name: Authorization
-          in: header
-          required: true
-          type: string
-          description: Bearer token for authentication
-          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        - name: transactionId
-          in: path
-          required: true
-          type: string
-          description: Transaction ID to delete
-      responses:
-        '200':
-          description: Transaction deleted successfully
         '401':
           description: Unauthorized - Invalid or missing token
         '404':
@@ -373,35 +311,6 @@ definitions:
         type: string
         description: Additional notes
         example: "Weekly grocery shopping"
-
-  TransactionCreate:
-    type: object
-    properties:
-      accountId:
-        type: string
-        description: Account ID for the transaction
-        example: "8349"
-      description:
-        type: string
-        description: Transaction description
-        example: "New transaction"
-      amount:
-        type: number
-        format: float
-        description: Transaction amount
-        example: -25.00
-      category:
-        type: string
-        description: Transaction category
-        example: "Food"
-      notes:
-        type: string
-        description: Additional notes
-        example: "Optional transaction notes"
-    required:
-      - accountId
-      - description
-      - amount
 
   TransactionUpdate:
     type: object
