@@ -8,6 +8,10 @@ host: localhost:3001
 basePath: /api/v1
 schemes:
   - http
+consumes:
+  - application/json
+produces:
+  - application/json
 paths:
   /user/login:
     post:
@@ -22,8 +26,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Login'
-      produces:
-        - application/json
       responses:
         '200':
           description: Login Successfully
@@ -42,16 +44,34 @@ paths:
         - User Module
       summary: User Profile API
       description: API for fetching a user profile
-      parameters:
-        - name: Authorization
-          in: header
-          required: true
-          type: string
-          description: Bearer token for authentication
-          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       responses:
         '200':
           description: User profile retrieved successfully
+          schema:
+            $ref: '#/definitions/UserProfileResponse'
+        '400':
+          description: Invalid Fields
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+    put:
+      security:
+        - Bearer: []
+      tags:
+        - User Module
+      summary: Update User Profile
+      description: API for updating user profile information
+      parameters:
+        - in: body
+          name: body
+          description: Updated user profile data
+          required: true
+          schema:
+            $ref: '#/definitions/UserProfileUpdate'
+      responses:
+        '200':
+          description: User profile updated successfully
           schema:
             $ref: '#/definitions/UserProfileResponse'
         '400':
@@ -67,20 +87,26 @@ paths:
         - Bearer: []
       tags:
         - Transactions
-      summary: Get account transactions
-      description: Get all transactions for an account with token authentication
+      summary: Get account transactions for current month
+      description: Get all transactions for an account for the current month with token authentication
       parameters:
-        - name: Authorization
-          in: header
-          required: true
-          type: string
-          description: Bearer token for authentication
-          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         - name: accountId
           in: path
           required: true
           type: string
           description: Account ID to retrieve transactions for
+        - name: month
+          in: query
+          required: false
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: Month for filtering transactions (1-12)
+        - name: year
+          in: query
+          required: false
+          type: integer
+          description: Year for filtering transactions
       responses:
         '200':
           description: Transactions retrieved successfully
@@ -102,12 +128,6 @@ paths:
       summary: Get transaction details
       description: Get details for a specific transaction with token authentication
       parameters:
-        - name: Authorization
-          in: header
-          required: true
-          type: string
-          description: Bearer token for authentication
-          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         - name: transactionId
           in: path
           required: true
@@ -124,7 +144,6 @@ paths:
           description: Transaction not found
         '500':
           description: Internal Server Error
-
     put:
       security:
         - Bearer: []
@@ -133,12 +152,6 @@ paths:
       summary: Update transaction details
       description: Update transaction information with token authentication
       parameters:
-        - name: Authorization
-          in: header
-          required: true
-          type: string
-          description: Bearer token for authentication
-          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         - name: transactionId
           in: path
           required: true
@@ -169,11 +182,14 @@ securityDefinitions:
     type: apiKey
     name: Authorization
     in: header
-    description: JWT Authorization header using the Bearer scheme. Example:"Authorization:Bearer {token}"
+    description: "JWT Authorization header using the Bearer scheme. Example 'Authorization: Bearer {token}'"
 
 definitions:
   Login:
     type: object
+    required:
+      - email
+      - password
     properties:
       email:
         type: string
@@ -183,38 +199,75 @@ definitions:
         type: string
         description: User password
         example: "password123"
-    required:
-      - email
-      - password
 
   LoginResponse:
     type: object
     properties:
-      token:
+      status:
+        type: integer
+        example: 200
+      message:
         type: string
-        description: JWT authentication token
-        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        example: "User successfully logged in"
+      body:
+        type: object
+        properties:
+          token:
+            type: string
+            description: JWT authentication token
+            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
   UserProfileResponse:
     type: object
     properties:
+      status:
+        type: integer
+        example: 200
+      message:
+        type: string
+        example: "User profile retrieved successfully"
+      body:
+        type: object
+        properties:
+          id:
+            type: string
+            example: "12345"
+          email:
+            type: string
+            example: "tony@example.com"
+          firstName:
+            type: string
+            example: "Tony"
+          lastName:
+            type: string
+            example: "Jarvis"
+          userName:
+            type: string
+            example: "tonyj"
+          createdAt:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:00:00Z"
+          updatedAt:
+            type: string
+            format: date-time
+            example: "2024-01-15T00:00:00Z"
+
+  UserProfileUpdate:
+    type: object
+    properties:
+      userName:
+        type: string
+        description: Updated username
+        example: "newusername"
       firstName:
         type: string
-        description: User's first name
-        example: "Tony"
+        description: Updated first name
+        example: "Anthony"
       lastName:
         type: string
-        description: User's last name
-        example: "Jarvis"
-      email:
-        type: string
-        description: User's email address
-        example: "tony@example.com"
-      accounts:
-        type: array
-        description: List of user's accounts
-        items:
-          $ref: '#/definitions/Account'
+        description: Updated last name
+        example: "Stark"
 
   Account:
     type: object
@@ -226,6 +279,10 @@ definitions:
       type:
         type: string
         description: Account type
+        enum:
+          - Checking
+          - Savings
+          - Credit Card
         example: "Checking"
       number:
         type: string
@@ -240,90 +297,103 @@ definitions:
   TransactionsResponse:
     type: object
     properties:
-      accountId:
+      status:
+        type: integer
+        example: 200
+      message:
         type: string
-        description: Account ID
-        example: "8349"
-      transactions:
-        type: array
-        description: List of transactions
-        items:
-          $ref: '#/definitions/Transaction'
+        example: "Transactions retrieved successfully"
+      body:
+        type: object
+        properties:
+          accountId:
+            type: string
+            example: "8349"
+          transactions:
+            type: array
+            items:
+              $ref: '#/definitions/Transaction'
 
   Transaction:
     type: object
     properties:
       id:
         type: string
-        description: Transaction unique identifier
         example: "tx_123456"
       date:
         type: string
         format: date
-        description: Transaction date
         example: "2024-01-15"
       description:
         type: string
-        description: Transaction description
         example: "Grocery Store Purchase"
       amount:
         type: number
         format: float
-        description: Transaction amount
         example: -45.67
       balance:
         type: number
         format: float
-        description: Account balance after transaction
         example: 2037.12
+      type:
+        type: string
+        enum:
+          - debit
+          - credit
+        example: "debit"
 
   TransactionDetails:
     type: object
     properties:
-      id:
+      status:
+        type: integer
+        example: 200
+      message:
         type: string
-        description: Transaction unique identifier
-        example: "tx_123456"
-      date:
-        type: string
-        format: date-time
-        description: Transaction date and time
-        example: "2024-01-15T14:30:00Z"
-      description:
-        type: string
-        description: Transaction description
-        example: "Grocery Store Purchase"
-      amount:
-        type: number
-        format: float
-        description: Transaction amount
-        example: -45.67
-      balance:
-        type: number
-        format: float
-        description: Account balance after transaction
-        example: 2037.12
-      category:
-        type: string
-        description: Transaction category
-        example: "Food"
-      notes:
-        type: string
-        description: Additional notes
-        example: "Weekly grocery shopping"
+        example: "Transaction details retrieved successfully"
+      body:
+        type: object
+        properties:
+          id:
+            type: string
+            example: "tx_123456"
+          date:
+            type: string
+            format: date-time
+            example: "2024-01-15T14:30:00Z"
+          description:
+            type: string
+            example: "Grocery Store Purchase"
+          amount:
+            type: number
+            format: float
+            example: -45.67
+          balance:
+            type: number
+            format: float
+            example: 2037.12
+          category:
+            type: string
+            example: "Food"
+          notes:
+            type: string
+            example: "Weekly grocery shopping"
+          type:
+            type: string
+            enum:
+              - debit
+              - credit
+            example: "debit"
 
   TransactionUpdate:
     type: object
     properties:
       description:
         type: string
-        description: Updated transaction description
         example: "Updated grocery purchase"
       category:
         type: string
-        description: Updated transaction category
         example: "Food & Dining"
       notes:
         type: string
-        description: Updated additional notes
         example: "Updated notes for this transaction"
